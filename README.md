@@ -35,6 +35,10 @@ Food Diary helps you keep track of when you eat specific meals and manage their 
 - UI: Material-UI + Custom CSS
 - i18n: React-Intl
 
+## Preview
+
+![Preview](./preview.gif)
+
 ## Installation
 
 1. Clone the repository
