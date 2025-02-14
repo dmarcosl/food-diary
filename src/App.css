@@ -1,0 +1,736 @@
+.App {
+  padding: 20px;
+  padding-bottom: 100px;
+  min-height: 100vh;
+}
+
+.food-input {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.add-button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  background-color: #45a049;
+}
+
+.add-button.disabled,
+.add-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.food-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100%;
+}
+
+.food-item {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.food-summary {
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background-color: #f8f8f8;
+}
+
+.food-summary:hover {
+  background-color: #f0f0f0;
+}
+
+.food-summary h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.latest-date {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.food-details {
+  padding: 15px;
+  border-top: 1px solid #eee;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.right-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.left-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.add-date-button {
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-date-button:hover {
+  background-color: #45a049;
+}
+
+.edit-button {
+  padding: 5px 10px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #1976D2;
+}
+
+.remove-button {
+  padding: 5px 10px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-button:hover {
+  background-color: #da190b;
+}
+
+.date-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dates-list {
+  margin: 0;
+}
+
+.date-item {
+  padding: 5px;
+  background-color: #f0f0f0;
+  margin: 5px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-date-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.delete-date-button:hover {
+  opacity: 1;
+}
+
+.fab-button {
+  position: fixed;
+  bottom: 76px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab-button:hover {
+  background-color: #45a049;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #da190b;
+}
+
+.show-more-button {
+  background: none;
+  border: none;
+  color: #2196F3;
+  cursor: pointer;
+  padding: 5px;
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+.show-more-button:hover {
+  text-decoration: underline;
+}
+
+.delete-modal {
+  max-width: 400px;
+}
+
+.delete-modal p {
+  margin: 15px 0;
+  line-height: 1.4;
+}
+
+.delete-warning {
+  color: #f44336;
+  font-size: 0.9em;
+}
+
+.delete-confirm-button {
+  padding: 8px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.delete-confirm-button:hover {
+  background-color: #d32f2f;
+}
+
+.view-history-button {
+  background: none;
+  border: none;
+  color: #2196F3;
+  cursor: pointer;
+  padding: 5px 0;
+  margin: 0 0 15px 0;
+  font-size: 0.9em;
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+
+.view-history-button:hover {
+  text-decoration: underline;
+}
+
+.view-ingredients-button {
+  background: none;
+  border: none;
+  color: #2196F3;
+  cursor: pointer;
+  padding: 5px 0;
+  margin: 15px 0 15px 0;
+  font-size: 0.9em;
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+
+.view-ingredients-button:hover {
+  text-decoration: underline;
+}
+
+.add-ingredient-button {
+  padding: 5px 10px;
+  background-color: #9C27B0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-ingredient-button:hover {
+  background-color: #7B1FA2;
+}
+
+.ingredients-list {
+  margin: 0 0 15px 0;
+}
+
+.ingredient-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  touch-action: none;
+  user-select: none;
+}
+
+.ingredient-item.dragging {
+  opacity: 0.5;
+  background-color: #e0e0e0;
+}
+
+.ingredient-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.ingredient-name {
+  font-size: 1.1em;
+}
+
+.ingredient-quantity {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.ingredient-where-to-buy {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.ingredient-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 10px;
+}
+
+.delete-ingredient-button,
+.edit-ingredient-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-ingredient-button:hover,
+.edit-ingredient-button:hover {
+  opacity: 0.7;
+}
+
+.drag-handle {
+  cursor: move;
+  padding: 5px;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ingredient-input {
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 480px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .left-buttons,
+  .right-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .add-date-button,
+  .add-ingredient-button,
+  .edit-button,
+  .remove-button {
+    flex: 1;
+    padding: 10px;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  .ingredient-content {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 5px;
+    height: 100%;
+    min-height: 80px;
+  }
+
+  .ingredient-item {
+    align-items: flex-start;
+    min-height: 100px;
+    padding: 12px;
+  }
+
+  .date-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    position: relative;
+    padding-right: 40px;
+  }
+
+  .delete-date-button {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .MuiFormControl-root .MuiRadioGroup-root {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .MuiFormControl-root .MuiFormControlLabel-root {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .ingredient-actions {
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 5px;
+    gap: 5px;
+    height: 100%;
+    min-height: 80px;
+  }
+}
+
+/* By default, keep horizontal layout */
+.MuiFormControl-root .MuiRadioGroup-root {
+  flex-direction: row;
+  gap: 20px;
+}
+
+.food-content {
+  margin-bottom: 56px;
+  min-height: calc(100vh - 156px);
+}
+
+.MuiFormControl-root {
+  margin: 15px 0;
+  width: 100%;
+}
+
+.MuiBottomNavigation-root {
+  background-color: #fff;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 200px);
+  text-align: center;
+}
+
+.empty-state-content {
+  position: relative;
+  padding: 20px;
+  max-width: 300px;
+}
+
+.empty-state-text {
+  font-size: 1.5em;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.empty-state-subtext {
+  font-size: 1.2em;
+  color: #999;
+}
+
+.empty-state-content {
+  position: relative;
+  padding: 20px;
+}
+
+.empty-state-text {
+  font-size: 1.5em;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.empty-state-subtext {
+  font-size: 1.2em;
+  color: #999;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: inherit;
+}
+
+.sidenav-content {
+  width: 250px;
+  padding: 20px;
+}
+
+.sidenav-content h2 {
+  margin: 0;
+  padding: 10px 0;
+}
+
+.theme-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+}
+
+/* Dark theme styles */
+.dark-mode {
+  background-color: #121212;
+  color: #fff;
+}
+
+.dark-mode .App {
+  background-color: #121212;
+}
+
+.dark-mode .food-item {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+.dark-mode .food-summary {
+  background-color: #262626;
+}
+
+.dark-mode .food-summary:hover {
+  background-color: #2d2d2d;
+}
+
+.dark-mode .ingredient-item {
+  background-color: #262626;
+}
+
+.dark-mode .modal {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.dark-mode .MuiBottomNavigation-root {
+  background-color: #1e1e1e !important;
+  border-top: 1px solid #333;
+}
+
+.dark-mode .MuiBottomNavigationAction-root {
+  color: #888 !important;
+}
+
+.dark-mode .MuiBottomNavigationAction-root.Mui-selected {
+  color: #90caf9 !important;
+}
+
+/* Dark background for the entire app */
+.dark-mode .App {
+  background-color: #121212;
+}
+
+/* Dark sidenav */
+.dark-mode .MuiPaper-root.MuiDrawer-paper {
+  background-color: #1e1e1e !important;
+  color: #fff !important;
+}
+
+/* Dark inputs */
+.dark-mode input {
+  background-color: #262626;
+  color: #fff;
+  border-color: #404040;
+}
+
+.dark-mode input::placeholder {
+  color: #888;
+}
+
+/* Dark radio buttons */
+.dark-mode .MuiRadio-root {
+  color: #90caf9;
+}
+
+.dark-mode .MuiFormControlLabel-label {
+  color: #fff;
+}
+
+/* Dark switch */
+.dark-mode .MuiSwitch-root {
+  color: #90caf9;
+}
+
+/* Dark divider */
+.dark-mode .MuiDivider-root {
+  border-color: #404040;
+}
+
+/* Dark empty state */
+.dark-mode .empty-state-text {
+  color: #fff;
+}
+
+.dark-mode .empty-state-subtext {
+  color: #888;
+}
+
+/* Dark mode buttons */
+.dark-mode .menu-button {
+  color: #fff;
+}
+
+.dark-mode .view-history-button,
+.dark-mode .view-ingredients-button,
+.dark-mode .show-more-button {
+  color: #90caf9;
+}
+
+.dark-mode .food-content {
+  background-color: #121212;
+  min-height: calc(100vh - 156px);
+}
+
+.dark-mode .food-list {
+  background-color: #121212;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+body.dark-mode {
+  background-color: #121212;
+}
+
+.dark-mode .date-item {
+  background-color: #262626;
+  color: #fff;
+}
+
+.dark-mode .dates-list {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.dark-mode .show-more-button {
+  color: #90caf9;
+  background-color: transparent;
+}
+
+.dark-mode .delete-date-button {
+  color: #f44336;
+  background-color: transparent;
+}
+
+.dark-mode .delete-date-button:hover {
+  opacity: 0.8;
+} 
