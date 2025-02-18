@@ -1,10 +1,12 @@
 import { Preferences } from '@capacitor/preferences';
-import { FoodList, Ingredient, MealType } from '../types/types';
+import { FoodList, Ingredient, MealType, WeekDay, Menu, MenuList } from '../types/types';
 
 const STORAGE_KEY = 'food-history';
 const THEME_KEY = 'dark-mode';
 const SHOW_NEW_FIRST_KEY = 'show-new-first';
 const SORT_DESCENDING_KEY = 'sort-descending';
+const MENU_STORAGE_KEY = 'menu-list';
+const LOCALE_KEY = 'locale';
 
 export const StorageService = {
   async saveFoodList(foodList: FoodList) {
@@ -210,5 +212,125 @@ export const StorageService = {
   async getSortDescendingPreference(): Promise<boolean> {
     const { value } = await Preferences.get({ key: SORT_DESCENDING_KEY });
     return value ? JSON.parse(value) : true;
+  },
+
+  async getMenuList(): Promise<MenuList> {
+    const { value } = await Preferences.get({ key: MENU_STORAGE_KEY });
+    return value ? JSON.parse(value) : [];
+  },
+
+  async saveMenuList(menuList: MenuList) {
+    await Preferences.set({
+      key: MENU_STORAGE_KEY,
+      value: JSON.stringify(menuList)
+    });
+  },
+
+  async addMenu(name: string, includedDays: WeekDay[], includedMealTypes: MealType[]): Promise<MenuList> {
+    const menuList = await this.getMenuList();
+    const dayOrder: { [key in WeekDay]: number } = {
+      'monday': 0,
+      'tuesday': 1,
+      'wednesday': 2,
+      'thursday': 3,
+      'friday': 4,
+      'saturday': 5,
+      'sunday': 6
+    };
+
+    const sortedDays = [...includedDays].sort((a, b) => dayOrder[a] - dayOrder[b]);
+
+    const newMenu: Menu = {
+      id: Date.now().toString(),
+      name,
+      days: sortedDays.map(day => ({
+        day,
+        breakfast: [],
+        lunch: [],
+        dinner: []
+      })),
+      includedDays: sortedDays,
+      includedMealTypes
+    };
+    const updatedList = [...menuList, newMenu];
+    await this.saveMenuList(updatedList);
+    return updatedList;
+  },
+
+  async updateMenuDay(menuId: string, day: WeekDay, mealType: MealType, foodIds: string[]): Promise<MenuList> {
+    const menuList = await this.getMenuList();
+    const updatedList = menuList.map(menu => {
+      if (menu.id === menuId) {
+        return {
+          ...menu,
+          days: menu.days.map(d => {
+            if (d.day === day) {
+              return {
+                ...d,
+                [mealType]: foodIds
+              };
+            }
+            return d;
+          })
+        };
+      }
+      return menu;
+    });
+    await this.saveMenuList(updatedList);
+    return updatedList;
+  },
+
+  async saveLocalePreference(locale: string) {
+    await Preferences.set({
+      key: LOCALE_KEY,
+      value: locale
+    });
+  },
+
+  async getLocalePreference(): Promise<string> {
+    const { value } = await Preferences.get({ key: LOCALE_KEY });
+    return value || navigator.language.split('-')[0];
+  },
+
+  async updateMenu(menuId: string, name: string, includedDays: WeekDay[], includedMealTypes: MealType[]): Promise<MenuList> {
+    const menuList = await this.getMenuList();
+    const dayOrder: { [key in WeekDay]: number } = {
+      'monday': 0,
+      'tuesday': 1,
+      'wednesday': 2,
+      'thursday': 3,
+      'friday': 4,
+      'saturday': 5,
+      'sunday': 6
+    };
+
+    const sortedDays = [...includedDays].sort((a, b) => dayOrder[a] - dayOrder[b]);
+
+    const updatedList = menuList.map(menu => {
+      if (menu.id === menuId) {
+        return {
+          ...menu,
+          name,
+          includedDays: sortedDays,
+          includedMealTypes,
+          days: sortedDays.map(day => ({
+            day,
+            breakfast: menu.days.find(d => d.day === day)?.breakfast || [],
+            lunch: menu.days.find(d => d.day === day)?.lunch || [],
+            dinner: menu.days.find(d => d.day === day)?.dinner || []
+          }))
+        };
+      }
+      return menu;
+    });
+    await this.saveMenuList(updatedList);
+    return updatedList;
+  },
+
+  async removeMenu(menuId: string): Promise<MenuList> {
+    const menuList = await this.getMenuList();
+    const updatedList = menuList.filter(menu => menu.id !== menuId);
+    await this.saveMenuList(updatedList);
+    return updatedList;
   }
 }; 

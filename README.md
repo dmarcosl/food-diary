@@ -4,40 +4,49 @@ A mobile application to track your meals and their ingredients, built with React
 
 ## Description
 
-Food Diary helps you keep track of when you eat specific meals and manage their ingredients. It's designed to help you maintain a record of your favorite meals and when you last had them.
+Food Diary helps you keep track of your meals, plan weekly menus, and manage ingredients. It's designed to help you maintain a record of your favorite meals, organize weekly meal planning, and track when you last had specific dishes.
 
 ## Features
 
-- **Meal Organization**
-  - Categorize meals into Breakfast, Lunch, and Dinner
-  - Track dates for each meal
-  - View meal history with dates
+### Meal Management
+- Add meals with dates
+- Categorize meals (breakfast, lunch, dinner)
+- Track ingredients for each meal
+- View meal history
+- Edit meal details
+- Quick access to meal details from menus
 
-- **Ingredient Management**
-  - Add ingredients with quantities
-  - Specify where to buy each ingredient
-  - Reorder ingredients via drag and drop
+### Menu Planning
+- Create weekly menus
+- Customize menu days and meal types
+- Assign multiple dishes to each meal type
+- Quick navigation between menus and dishes
+- Edit menu days individually
+- Automatic day ordering (Monday to Sunday)
+- Edit menu configuration (included days and meal types)
+- Multiple dishes per meal type support
 
-- **Customization**
-  - Dark/Light theme
-  - Sorting preferences
-  - Language selection (EN/ES)
+### User Interface
+- Dark mode support
+- Responsive design
+- Multi-language support (English and Spanish)
+- Customizable sorting options
+  - Sort by date
+  - Show undated items first
+  - Sort in descending/ascending order
+- Interactive meal type icons
+- Quick navigation between related items
+- Confirmation dialogs for important actions
 
-- **User Experience**
-  - Responsive design
-  - Offline support
-  - Local data storage
-
-## Technical Stack
-
-- Frontend: React + TypeScript
-- Native: Capacitor
-- UI: Material-UI + Custom CSS
-- i18n: React-Intl
-
-## Preview
-
-![Preview](./preview.gif)
+## Technical Features
+- Built with React and TypeScript
+- Uses Material-UI components
+- Local storage with Capacitor Preferences
+- Internationalization with react-intl
+- Mobile-first responsive design
+- State persistence for user preferences
+- Modular component architecture
+- Type-safe data management
 
 ## Installation
 
@@ -114,18 +123,33 @@ To generate the IPA:
 
 1. **Adding Meals**
    - Tap the + button
+   - Select "Create Dish"
    - Enter meal name
    - Select category (Breakfast/Lunch/Dinner)
 
-2. **Managing Meals**
+2. **Creating Menus**
+   - Tap the + button
+   - Select "Create Menu"
+   - Enter menu name
+   - Select days to include
+   - Choose meal types to include
+
+3. **Managing Menus**
+   - Edit menu configuration
+   - Add/remove dishes to specific days
+   - Navigate to dish details from menu
+   - Delete menus when needed
+
+4. **Managing Meals**
    - Tap a meal to expand
    - Add dates when you eat it
    - Add/edit ingredients
    - View meal history
 
-3. **Settings**
+5. **Settings**
    - Access via menu button (top-right)
    - Toggle dark mode
+   - Change language (EN/ES)
    - Change sorting preferences
 
 ## Contributing

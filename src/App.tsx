@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useIntl, FormattedMessage, IntlProvider } from 'react-intl';
-import { FoodList, FoodEntry, Ingredient, MealType } from './types/types';
+import { FoodList, FoodEntry, Ingredient, MealType, WeekDay, MenuList, Menu } from './types/types';
 import { StorageService } from './services/storage';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -15,13 +15,26 @@ import Radio from '@mui/material/Radio';
 import BreakfastDiningIcon from '@mui/icons-material/BreakfastDining';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import DinnerDiningIcon from '@mui/icons-material/DinnerDining';
-import MenuIcon from '@mui/icons-material/Menu';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import Drawer from '@mui/material/Drawer';
 import Switch from '@mui/material/Switch';
 import Divider from '@mui/material/Divider';
 import './App.css';
 import en from './i18n/en';
 import es from './i18n/es';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import Checkbox from '@mui/material/Checkbox';
+import FormGroup from '@mui/material/FormGroup';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import { MenuIcon } from './components/MenuIcon';
+import LanguageIcon from '@mui/icons-material/Language';
+import { RotatingMealIcon } from './components/RotatingMealIcon';
+import { LocalizedInput } from './components/LocalizedInput';
 
 const getMessages = (locale: string) => {
   switch (locale) {
@@ -31,6 +44,16 @@ const getMessages = (locale: string) => {
       return en;
   }
 };
+
+const WEEKDAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday'
+] as const;
 
 function App() {
   const intl = useIntl();
@@ -60,8 +83,20 @@ function App() {
   const [showNewFirst, setShowNewFirst] = useState(false);
   const [sortDescending, setSortDescending] = useState(true);
   const [isSidenavOpen, setIsSidenavOpen] = useState(false);
-  const locale = navigator.language.split('-')[0];
+  const [locale, setLocale] = useState(navigator.language.split('-')[0]);
   const messages = getMessages(locale);
+  const [menus, setMenus] = useState<MenuList>([]);
+  const [isCreateMenuModalOpen, setIsCreateMenuModalOpen] = useState(false);
+  const [newMenuName, setNewMenuName] = useState('');
+  const [selectedMenuDays, setSelectedMenuDays] = useState<WeekDay[]>([]);
+  const [selectedMenuMealTypes, setSelectedMenuMealTypes] = useState<MealType[]>([]);
+  const [speedDialOpen, setSpeedDialOpen] = useState(false);
+  const [editingMenuDay, setEditingMenuDay] = useState<{menuId: string, day: WeekDay} | null>(null);
+  const [selectedBreakfastFoods, setSelectedBreakfastFoods] = useState<string[]>([]);
+  const [selectedLunchFoods, setSelectedLunchFoods] = useState<string[]>([]);
+  const [selectedDinnerFoods, setSelectedDinnerFoods] = useState<string[]>([]);
+  const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
+  const [menuToDelete, setMenuToDelete] = useState<Menu | null>(null);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -73,14 +108,21 @@ function App() {
 
   useEffect(() => {
     loadFoods();
+    loadMenus();
     loadThemePreference();
     loadShowNewFirstPreference();
     loadSortDescendingPreference();
+    loadLocalePreference();
   }, []);
 
   const loadFoods = async () => {
     const storedFoods = await StorageService.getFoodList();
     setFoods(storedFoods);
+  };
+
+  const loadMenus = async () => {
+    const storedMenus = await StorageService.getMenuList();
+    setMenus(storedMenus);
   };
 
   const loadThemePreference = async () => {
@@ -98,6 +140,11 @@ function App() {
     setSortDescending(sortDesc);
   };
 
+  const loadLocalePreference = async () => {
+    const savedLocale = await StorageService.getLocalePreference();
+    setLocale(savedLocale);
+  };
+
   const handleThemeChange = async (checked: boolean) => {
     setIsDarkMode(checked);
     await StorageService.saveThemePreference(checked);
@@ -111,6 +158,11 @@ function App() {
   const handleSortDescendingChange = async (checked: boolean) => {
     setSortDescending(checked);
     await StorageService.saveSortDescendingPreference(checked);
+  };
+
+  const handleLocaleChange = async (newLocale: string) => {
+    setLocale(newLocale);
+    await StorageService.saveLocalePreference(newLocale);
   };
 
   const handleAddDate = async (foodId: string, date: string) => {
@@ -132,13 +184,13 @@ function App() {
       setNewFoodName('');
       switch (selectedMealType) {
         case 'breakfast':
-          setCurrentTab(0);
-          break;
-        case 'lunch':
           setCurrentTab(1);
           break;
-        case 'dinner':
+        case 'lunch':
           setCurrentTab(2);
+          break;
+        case 'dinner':
+          setCurrentTab(3);
           break;
       }
       setSelectedMealType('breakfast');
@@ -187,14 +239,25 @@ function App() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    const weekDay = intl.formatMessage({ id: `weekday.${['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()]}` });
-    return `${date.toISOString().split('T')[0]} ${weekDay}`;
+    const dayIndex = (date.getDay() + 6) % 7;
+    return {
+      date: date.toISOString().split('T')[0],
+      weekDayId: `weekday.${WEEKDAYS[dayIndex]}`
+    };
   };
 
   const getLatestDate = (dates: string[]) => {
-    return dates.length > 0 
-      ? formatDate(dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0])
-      : intl.formatMessage({ id: 'text.noRecords' });
+    if (dates.length === 0) return '';
+    const sortedDates = [...dates].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    const { date, weekDayId } = formatDate(sortedDates[0]);
+    return (
+      <div className="latest-date">
+        <span className="latest-date-number">{date}</span>
+        <span className="latest-date-weekday">
+          {intl.formatMessage({ id: weekDayId })}
+        </span>
+      </div>
+    );
   };
 
   const openDateModal = (foodId: string, e: React.MouseEvent) => {
@@ -303,13 +366,42 @@ function App() {
 
   const handleModalOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      handleCloseModal();
-      closeDateModal();
-      closeDeleteModal();
-      setIngredientToDelete(null);
-      setDateToDelete(null);
+      // Close create/edit dish modal
+      setIsModalOpen(false);
+      setEditingFood(null);
+      setNewFoodName('');
+      setSelectedMealType('breakfast');
+
+      // Close create/edit menu modal
+      setIsCreateMenuModalOpen(false);
+      setEditingMenu(null);
+      setNewMenuName('');
+      setSelectedMenuDays([]);
+      setSelectedMenuMealTypes([]);
+
+      // Close edit menu day modal
+      setEditingMenuDay(null);
+      setSelectedBreakfastFoods([]);
+      setSelectedLunchFoods([]);
+      setSelectedDinnerFoods([]);
+
+      // Close date modal
+      setIsDateModalOpen(false);
+      setSelectedFoodId(null);
+      setSelectedDate(new Date().toISOString().split('T')[0]);
+
+      // Close ingredient modal
       setIsIngredientModalOpen(false);
       setEditingIngredient(null);
+      setNewIngredientName('');
+      setNewIngredientQuantity('');
+      setNewIngredientWhereToBuy('');
+
+      // Close confirmation modals
+      setFoodToDelete(null);
+      setIngredientToDelete(null);
+      setDateToDelete(null);
+      setMenuToDelete(null);
     }
   };
 
@@ -342,6 +434,74 @@ function App() {
       [...withDates, ...withoutDates];
   };
 
+  const handleCreateMenu = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMenuName.trim() && selectedMenuDays.length > 0 && selectedMenuMealTypes.length > 0) {
+      const updatedMenus = await StorageService.addMenu(
+        newMenuName.trim(),
+        selectedMenuDays,
+        selectedMenuMealTypes
+      );
+      setMenus(updatedMenus);
+      setNewMenuName('');
+      setSelectedMenuDays([]);
+      setSelectedMenuMealTypes([]);
+      setIsCreateMenuModalOpen(false);
+      setCurrentTab(0); // Stay in menus tab
+    }
+  };
+
+  const handleEditDay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingMenuDay) {
+      const { menuId, day } = editingMenuDay;
+      const menu = menus.find(m => m.id === menuId);
+      if (menu) {
+        if (menu.includedMealTypes.includes('breakfast')) {
+          await StorageService.updateMenuDay(menuId, day, 'breakfast', selectedBreakfastFoods);
+        }
+        if (menu.includedMealTypes.includes('lunch')) {
+          await StorageService.updateMenuDay(menuId, day, 'lunch', selectedLunchFoods);
+        }
+        if (menu.includedMealTypes.includes('dinner')) {
+          await StorageService.updateMenuDay(menuId, day, 'dinner', selectedDinnerFoods);
+        }
+        const updatedMenus = await StorageService.getMenuList();
+        setMenus(updatedMenus);
+        setEditingMenuDay(null);
+        setSelectedBreakfastFoods([]);
+        setSelectedLunchFoods([]);
+        setSelectedDinnerFoods([]);
+      }
+    }
+  };
+
+  const handleEditMenu = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingMenu && newMenuName.trim() && selectedMenuDays.length > 0 && selectedMenuMealTypes.length > 0) {
+      const updatedMenus = await StorageService.updateMenu(
+        editingMenu.id,
+        newMenuName.trim(),
+        selectedMenuDays,
+        selectedMenuMealTypes
+      );
+      setMenus(updatedMenus);
+      setNewMenuName('');
+      setSelectedMenuDays([]);
+      setSelectedMenuMealTypes([]);
+      setEditingMenu(null);
+    }
+  };
+
+  const handleDeleteMenu = async () => {
+    if (menuToDelete) {
+      const updatedMenus = await StorageService.removeMenu(menuToDelete.id);
+      setMenus(updatedMenus);
+      setMenuToDelete(null);
+      setExpandedId(null);
+    }
+  };
+
   return (
     <IntlProvider messages={messages} locale={locale} defaultLocale="en">
       <div className={`App ${isDarkMode ? 'dark-mode' : ''}`}>
@@ -349,8 +509,9 @@ function App() {
           <h1>
             <FormattedMessage 
               id={
-                currentTab === 0 ? 'meal.breakfast' :
-                currentTab === 1 ? 'meal.lunch' :
+                currentTab === 0 ? 'meal.menus' :
+                currentTab === 1 ? 'meal.breakfast' :
+                currentTab === 2 ? 'meal.lunch' :
                 'meal.dinner'
               }
             />
@@ -398,11 +559,147 @@ function App() {
                 onChange={(e) => handleSortDescendingChange(e.target.checked)}
               />
             </div>
+            <Divider className="settings-divider" />
+            
+            <div className="settings-group language-settings">
+              <div className="settings-item">
+                <div className="settings-label">
+                  <LanguageIcon />
+                  <span><FormattedMessage id="settings.language" /></span>
+                </div>
+                <div className="language-buttons">
+                  <button
+                    className={`language-button ${locale === 'en' ? 'active' : ''}`}
+                    onClick={() => handleLocaleChange('en')}
+                  >
+                    EN
+                  </button>
+                  <button
+                    className={`language-button ${locale === 'es' ? 'active' : ''}`}
+                    onClick={() => handleLocaleChange('es')}
+                  >
+                    ES
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </Drawer>
 
         <div className="food-content">
           {currentTab === 0 && (
+            <div className="food-list">
+              {menus.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-content">
+                    <p className="empty-state-text">
+                      <FormattedMessage id="text.noMenus" />
+                    </p>
+                    <p className="empty-state-subtext">
+                      <FormattedMessage id="text.tapToAdd" />
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                menus.map(menu => (
+                  <div 
+                    key={menu.id} 
+                    className={`menu-item ${expandedId === menu.id ? 'expanded' : ''}`}
+                  >
+                    <div 
+                      className="menu-summary"
+                      onClick={() => toggleExpand(menu.id)}
+                    >
+                      <h2>{menu.name}</h2>
+                    </div>
+                    {expandedId === menu.id && (
+                      <div className="menu-details">
+                        <div className="action-buttons">
+                          <div className="right-buttons">
+                            <button
+                              className="edit-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingMenu(menu);
+                                setNewMenuName(menu.name);
+                                setSelectedMenuDays(menu.includedDays);
+                                setSelectedMenuMealTypes(menu.includedMealTypes);
+                              }}
+                            >
+                              <EditIcon />
+                              <FormattedMessage id="button.edit" />
+                            </button>
+                            <button
+                              className="remove-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuToDelete(menu);
+                              }}
+                            >
+                              <DeleteIcon />
+                              <FormattedMessage id="button.delete" />
+                            </button>
+                          </div>
+                        </div>
+                        {menu.days.map(day => (
+                          <div key={day.day} className="menu-day">
+                            <div className="day-header">
+                              <h3><FormattedMessage id={`weekday.${day.day}`} /></h3>
+                              <button 
+                                className="edit-button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const menuDay = menu.days.find(d => d.day === day.day);
+                                  if (menuDay) {
+                                    setEditingMenuDay({ menuId: menu.id, day: day.day });
+                                    setSelectedBreakfastFoods(menuDay.breakfast);
+                                    setSelectedLunchFoods(menuDay.lunch);
+                                    setSelectedDinnerFoods(menuDay.dinner);
+                                  }
+                                }}
+                              >
+                                <EditIcon />
+                              </button>
+                            </div>
+                            <div className="meal-group">
+                              {[
+                                ...day.breakfast.map(id => ({ id, type: 'breakfast' as MealType })),
+                                ...day.lunch.map(id => ({ id, type: 'lunch' as MealType })),
+                                ...day.dinner.map(id => ({ id, type: 'dinner' as MealType }))
+                              ].map(({ id, type }) => {
+                                const food = foods.find(f => f.id === id);
+                                if (!food) return null;
+                                
+                                return (
+                                  <div key={id} className="meal-item">
+                                    {type === 'breakfast' && <BreakfastDiningIcon />}
+                                    {type === 'lunch' && <LunchDiningIcon />}
+                                    {type === 'dinner' && <DinnerDiningIcon />}
+                                    <span>{food.name}</span>
+                                    <button
+                                      className="goto-food-button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentTab(type === 'breakfast' ? 1 : type === 'lunch' ? 2 : 3);
+                                        setExpandedId(id);
+                                      }}
+                                    >
+                                      <ArrowForwardIcon />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          {currentTab === 1 && (
             <div className="food-list">
               {sortFoodItems(foods, 'breakfast').length === 0 ? (
                 <div className="empty-state">
@@ -542,7 +839,15 @@ function App() {
                           .slice(0, showAllDates === food.id ? undefined : 5)
                           .map((date, index) => (
                           <div key={index} className="date-item">
-                            <span>{formatDate(date)}</span>
+                            <span>
+                              <FormattedMessage
+                                id="text.dateFormat"
+                                values={{
+                                  date: formatDate(date).date,
+                                  weekDay: intl.formatMessage({ id: formatDate(date).weekDayId })
+                                }}
+                              />
+                            </span>
                             <button
                               className="delete-date-button"
                               onClick={(e) => {
@@ -588,7 +893,7 @@ function App() {
               )}
             </div>
           )}
-          {currentTab === 1 && (
+          {currentTab === 2 && (
             <div className="food-list">
               {sortFoodItems(foods, 'lunch').length === 0 ? (
                 <div className="empty-state">
@@ -728,7 +1033,15 @@ function App() {
                           .slice(0, showAllDates === food.id ? undefined : 5)
                           .map((date, index) => (
                           <div key={index} className="date-item">
-                            <span>{formatDate(date)}</span>
+                            <span>
+                              <FormattedMessage
+                                id="text.dateFormat"
+                                values={{
+                                  date: formatDate(date).date,
+                                  weekDay: intl.formatMessage({ id: formatDate(date).weekDayId })
+                                }}
+                              />
+                            </span>
                             <button
                               className="delete-date-button"
                               onClick={(e) => {
@@ -774,7 +1087,7 @@ function App() {
               )}
             </div>
           )}
-          {currentTab === 2 && (
+          {currentTab === 3 && (
             <div className="food-list">
               {sortFoodItems(foods, 'dinner').length === 0 ? (
                 <div className="empty-state">
@@ -914,7 +1227,15 @@ function App() {
                           .slice(0, showAllDates === food.id ? undefined : 5)
                           .map((date, index) => (
                           <div key={index} className="date-item">
-                            <span>{formatDate(date)}</span>
+                            <span>
+                              <FormattedMessage
+                                id="text.dateFormat"
+                                values={{
+                                  date: formatDate(date).date,
+                                  weekDay: intl.formatMessage({ id: formatDate(date).weekDayId })
+                                }}
+                              />
+                            </span>
                             <button
                               className="delete-date-button"
                               onClick={(e) => {
@@ -970,29 +1291,61 @@ function App() {
               setCurrentTab(newValue);
             }}
           >
-            <BottomNavigationAction label={intl.formatMessage({ id: 'meal.breakfast' })} icon={<BreakfastDiningIcon />} />
-            <BottomNavigationAction label={intl.formatMessage({ id: 'meal.lunch' })} icon={<LunchDiningIcon />} />
-            <BottomNavigationAction label={intl.formatMessage({ id: 'meal.dinner' })} icon={<DinnerDiningIcon />} />
+            <BottomNavigationAction 
+              label={<FormattedMessage id="meal.menus" />}
+              icon={<RestaurantIcon />} 
+            />
+            <BottomNavigationAction 
+              label={<FormattedMessage id="meal.breakfast" />}
+              icon={<BreakfastDiningIcon />} 
+            />
+            <BottomNavigationAction 
+              label={<FormattedMessage id="meal.lunch" />}
+              icon={<LunchDiningIcon />} 
+            />
+            <BottomNavigationAction 
+              label={<FormattedMessage id="meal.dinner" />}
+              icon={<DinnerDiningIcon />} 
+            />
           </BottomNavigation>
         </Paper>
 
-        <button 
-          className="fab-button" 
-          onClick={() => setIsModalOpen(true)}
+        <SpeedDial
+          ariaLabel="Create options"
+          className="fab-button"
+          icon={<SpeedDialIcon />}
+          onClose={() => setSpeedDialOpen(false)}
+          onOpen={() => setSpeedDialOpen(true)}
+          open={speedDialOpen}
         >
-          +
-        </button>
+          <SpeedDialAction
+            icon={<RestaurantIcon />}
+            tooltipTitle={<FormattedMessage id="button.createMenu" />}
+            onClick={() => {
+              setSpeedDialOpen(false);
+              setIsCreateMenuModalOpen(true);
+            }}
+          />
+          <SpeedDialAction
+            icon={<RotatingMealIcon />}
+            tooltipTitle={<FormattedMessage id="button.createDish" />}
+            onClick={() => {
+              setSpeedDialOpen(false);
+              setIsModalOpen(true);
+            }}
+          />
+        </SpeedDial>
 
         {(isModalOpen || editingFood) && (
           <div className="modal-overlay" onClick={handleModalOverlayClick}>
             <div className="modal">
               <h2><FormattedMessage id={editingFood ? 'modal.editFood' : 'modal.addFood'} /></h2>
               <form onSubmit={editingFood ? handleEditFood : handleAddFood}>
-                <input
+                <LocalizedInput
                   type="text"
                   value={newFoodName}
                   onChange={(e) => setNewFoodName(e.target.value)}
-                  placeholder={intl.formatMessage({ id: 'input.foodName' })}
+                  translationId="input.foodName"
                   className="food-input"
                   autoFocus
                 />
@@ -1005,17 +1358,17 @@ function App() {
                     <FormControlLabel 
                       value="breakfast" 
                       control={<Radio />} 
-                      label={intl.formatMessage({ id: 'meal.breakfast' })}
+                      label={<FormattedMessage id="meal.breakfast" />}
                     />
                     <FormControlLabel 
                       value="lunch" 
                       control={<Radio />} 
-                      label={intl.formatMessage({ id: 'meal.lunch' })}
+                      label={<FormattedMessage id="meal.lunch" />}
                     />
                     <FormControlLabel 
                       value="dinner" 
                       control={<Radio />} 
-                      label={intl.formatMessage({ id: 'meal.dinner' })}
+                      label={<FormattedMessage id="meal.dinner" />}
                     />
                   </RadioGroup>
                 </FormControl>
@@ -1090,7 +1443,7 @@ function App() {
                   onClick={handleRemoveFood} 
                   className="delete-confirm-button"
                 >
-                  Eliminar
+                  <FormattedMessage id="button.delete" />
                 </button>
               </div>
             </div>
@@ -1100,28 +1453,30 @@ function App() {
         {(isIngredientModalOpen || editingIngredient) && (
           <div className="modal-overlay" onClick={handleModalOverlayClick}>
             <div className="modal">
-              <h2><FormattedMessage id={editingIngredient ? 'modal.editIngredient' : 'modal.addIngredient'} /></h2>
+              <h2>
+                <FormattedMessage id={editingIngredient ? 'modal.editIngredient' : 'modal.addIngredient'} />
+              </h2>
               <form onSubmit={editingIngredient ? handleEditIngredient : handleAddIngredient}>
-                <input
+                <LocalizedInput
                   type="text"
                   value={newIngredientName}
                   onChange={(e) => setNewIngredientName(e.target.value)}
-                  placeholder={intl.formatMessage({ id: 'input.ingredientName' })}
+                  translationId="input.ingredientName"
                   className="ingredient-input"
                   autoFocus
                 />
-                <input
+                <LocalizedInput
                   type="text"
                   value={newIngredientQuantity}
                   onChange={(e) => setNewIngredientQuantity(e.target.value)}
-                  placeholder={intl.formatMessage({ id: 'input.ingredientQuantity' })}
+                  translationId="input.ingredientQuantity"
                   className="ingredient-input"
                 />
-                <input
+                <LocalizedInput
                   type="text"
                   value={newIngredientWhereToBuy}
                   onChange={(e) => setNewIngredientWhereToBuy(e.target.value)}
-                  placeholder={intl.formatMessage({ id: 'input.ingredientWhereToBuy' })}
+                  translationId="input.ingredientWhereToBuy"
                   className="ingredient-input"
                 />
                 <div className="modal-buttons">
@@ -1139,7 +1494,7 @@ function App() {
                     <FormattedMessage id="button.cancel" />
                   </button>
                   <button 
-                    type="submit" 
+                    type="submit"
                     disabled={!newIngredientName.trim() || !newIngredientQuantity.trim()}
                     className={`add-button ${!newIngredientName.trim() || !newIngredientQuantity.trim() ? 'disabled' : ''}`}
                   >
@@ -1185,7 +1540,11 @@ function App() {
               <h2><FormattedMessage id="modal.deleteConfirm" /></h2>
               <p><FormattedMessage 
                 id="modal.deleteDate" 
-                values={{ date: formatDate(dateToDelete.date) }} 
+                values={{ 
+                  date: `${formatDate(dateToDelete.date).date} ${intl.formatMessage({ 
+                    id: formatDate(dateToDelete.date).weekDayId 
+                  })}` 
+                }} 
               /></p>
               <div className="modal-buttons">
                 <button 
@@ -1198,6 +1557,288 @@ function App() {
                 <button 
                   type="button" 
                   onClick={handleRemoveDate} 
+                  className="delete-confirm-button"
+                >
+                  <FormattedMessage id="button.delete" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isCreateMenuModalOpen && (
+          <div className="modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="modal">
+              <h2><FormattedMessage id="modal.createMenu" /></h2>
+              <form onSubmit={handleCreateMenu}>
+                <LocalizedInput
+                  type="text"
+                  value={newMenuName}
+                  onChange={(e) => setNewMenuName(e.target.value)}
+                  translationId="input.menuName"
+                  className="menu-input"
+                  autoFocus
+                />
+                
+                <h3><FormattedMessage id="text.selectDays" /></h3>
+                <Select
+                  multiple
+                  value={selectedMenuDays}
+                  onChange={(e) => setSelectedMenuDays(e.target.value as WeekDay[])}
+                  input={<OutlinedInput />}
+                  renderValue={(selected) => 
+                    selected.map(day => intl.formatMessage({ id: `weekday.${day}` })).join(', ')
+                  }
+                  className="meal-select"
+                >
+                  {WEEKDAYS.map((day) => (
+                    <MenuItem key={day} value={day}>
+                      <FormattedMessage id={`weekday.${day}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <h3><FormattedMessage id="text.selectMealTypes" /></h3>
+                <Select
+                  multiple
+                  value={selectedMenuMealTypes}
+                  onChange={(e) => setSelectedMenuMealTypes(e.target.value as MealType[])}
+                  input={<OutlinedInput />}
+                  renderValue={(selected) => 
+                    selected.map(type => intl.formatMessage({ id: `meal.${type}` })).join(', ')
+                  }
+                  className="meal-select"
+                >
+                  {['breakfast', 'lunch', 'dinner'].map((type) => (
+                    <MenuItem key={type} value={type}>
+                      <FormattedMessage id={`meal.${type}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <div className="modal-buttons">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setIsCreateMenuModalOpen(false);
+                      setNewMenuName('');
+                      setSelectedMenuDays([]);
+                      setSelectedMenuMealTypes([]);
+                    }} 
+                    className="cancel-button"
+                  >
+                    <FormattedMessage id="button.cancel" />
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={!newMenuName.trim() || selectedMenuDays.length === 0 || selectedMenuMealTypes.length === 0}
+                    className={`add-button ${!newMenuName.trim() || selectedMenuDays.length === 0 || selectedMenuMealTypes.length === 0 ? 'disabled' : ''}`}
+                  >
+                    <FormattedMessage id="button.add" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {editingMenuDay && (
+          <div className="modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="modal">
+              <h2>
+                <FormattedMessage 
+                  id="modal.editMenuDay" 
+                  values={{ 
+                    day: <FormattedMessage id={`weekday.${editingMenuDay.day}`} /> 
+                  }} 
+                />
+              </h2>
+              <form onSubmit={handleEditDay}>
+                {menus.find(m => m.id === editingMenuDay.menuId)?.includedMealTypes.includes('breakfast') && (
+                  <>
+                    <h3><FormattedMessage id="meal.breakfast" /></h3>
+                    <Select
+                      multiple
+                      value={selectedBreakfastFoods}
+                      onChange={(e) => setSelectedBreakfastFoods(e.target.value as string[])}
+                      input={<OutlinedInput />}
+                      renderValue={(selected) => 
+                        selected.map(id => foods.find(f => f.id === id)?.name || '').join(', ')
+                      }
+                      className="meal-select"
+                    >
+                      {sortFoodItems(foods, 'breakfast').map(food => (
+                        <MenuItem key={food.id} value={food.id}>
+                          {food.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </>
+                )}
+                {menus.find(m => m.id === editingMenuDay.menuId)?.includedMealTypes.includes('lunch') && (
+                  <>
+                    <h3><FormattedMessage id="meal.lunch" /></h3>
+                    <Select
+                      multiple
+                      value={selectedLunchFoods}
+                      onChange={(e) => setSelectedLunchFoods(e.target.value as string[])}
+                      input={<OutlinedInput />}
+                      renderValue={(selected) => 
+                        selected.map(id => foods.find(f => f.id === id)?.name || '').join(', ')
+                      }
+                      className="meal-select"
+                    >
+                      {sortFoodItems(foods, 'lunch').map(food => (
+                        <MenuItem key={food.id} value={food.id}>
+                          {food.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </>
+                )}
+                {menus.find(m => m.id === editingMenuDay.menuId)?.includedMealTypes.includes('dinner') && (
+                  <>
+                    <h3><FormattedMessage id="meal.dinner" /></h3>
+                    <Select
+                      multiple
+                      value={selectedDinnerFoods}
+                      onChange={(e) => setSelectedDinnerFoods(e.target.value as string[])}
+                      input={<OutlinedInput />}
+                      renderValue={(selected) => 
+                        selected.map(id => foods.find(f => f.id === id)?.name || '').join(', ')
+                      }
+                      className="meal-select"
+                    >
+                      {sortFoodItems(foods, 'dinner').map(food => (
+                        <MenuItem key={food.id} value={food.id}>
+                          {food.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </>
+                )}
+                <div className="modal-buttons">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setEditingMenuDay(null);
+                      setSelectedBreakfastFoods([]);
+                      setSelectedLunchFoods([]);
+                      setSelectedDinnerFoods([]);
+                    }} 
+                    className="cancel-button"
+                  >
+                    <FormattedMessage id="button.cancel" />
+                  </button>
+                  <button type="submit" className="add-button">
+                    <FormattedMessage id="button.save" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {editingMenu && (
+          <div className="modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="modal">
+              <h2><FormattedMessage id="modal.editMenu" /></h2>
+              <form onSubmit={handleEditMenu}>
+                <LocalizedInput
+                  type="text"
+                  value={newMenuName}
+                  onChange={(e) => setNewMenuName(e.target.value)}
+                  translationId="input.menuName"
+                  className="menu-input"
+                  autoFocus
+                />
+                
+                <h3><FormattedMessage id="text.selectDays" /></h3>
+                <Select
+                  multiple
+                  value={selectedMenuDays}
+                  onChange={(e) => setSelectedMenuDays(e.target.value as WeekDay[])}
+                  input={<OutlinedInput />}
+                  renderValue={(selected) => 
+                    selected.map(day => intl.formatMessage({ id: `weekday.${day}` })).join(', ')
+                  }
+                  className="meal-select"
+                >
+                  {WEEKDAYS.map((day) => (
+                    <MenuItem key={day} value={day}>
+                      <FormattedMessage id={`weekday.${day}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <h3><FormattedMessage id="text.selectMealTypes" /></h3>
+                <Select
+                  multiple
+                  value={selectedMenuMealTypes}
+                  onChange={(e) => setSelectedMenuMealTypes(e.target.value as MealType[])}
+                  input={<OutlinedInput />}
+                  renderValue={(selected) => 
+                    selected.map(type => intl.formatMessage({ id: `meal.${type}` })).join(', ')
+                  }
+                  className="meal-select"
+                >
+                  {['breakfast', 'lunch', 'dinner'].map((type) => (
+                    <MenuItem key={type} value={type}>
+                      <FormattedMessage id={`meal.${type}`} />
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <div className="modal-buttons">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setEditingMenu(null);
+                      setNewMenuName('');
+                      setSelectedMenuDays([]);
+                      setSelectedMenuMealTypes([]);
+                    }} 
+                    className="cancel-button"
+                  >
+                    <FormattedMessage id="button.cancel" />
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={!newMenuName.trim() || selectedMenuDays.length === 0 || selectedMenuMealTypes.length === 0}
+                    className={`add-button ${!newMenuName.trim() || selectedMenuDays.length === 0 || selectedMenuMealTypes.length === 0 ? 'disabled' : ''}`}
+                  >
+                    <FormattedMessage id="button.save" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {menuToDelete && (
+          <div className="modal-overlay" onClick={handleModalOverlayClick}>
+            <div className="modal delete-modal">
+              <h2><FormattedMessage id="modal.deleteConfirm" /></h2>
+              <p>
+                <FormattedMessage 
+                  id="modal.deleteMenu" 
+                  values={{ name: menuToDelete.name }} 
+                />
+              </p>
+              <p className="delete-warning">
+                <FormattedMessage id="modal.deleteWarning" />
+              </p>
+              <div className="modal-buttons">
+                <button 
+                  type="button" 
+                  onClick={() => setMenuToDelete(null)} 
+                  className="cancel-button"
+                >
+                  <FormattedMessage id="button.cancel" />
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleDeleteMenu} 
                   className="delete-confirm-button"
                 >
                   <FormattedMessage id="button.delete" />
