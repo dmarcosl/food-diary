@@ -25,8 +25,6 @@ import es from './i18n/es';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-import Checkbox from '@mui/material/Checkbox';
-import FormGroup from '@mui/material/FormGroup';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';

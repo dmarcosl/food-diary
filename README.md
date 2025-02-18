@@ -119,6 +119,39 @@ To generate the IPA:
 > - Apple Developer account
 > - Proper certificates and provisioning profiles
 
+## Automatic Deployment
+
+This project uses GitHub Actions for automatic deployment to GitHub Pages. Every time a push is made to the `main` branch, the site is automatically built and deployed.
+
+### Deployment Configuration
+
+1. Make sure GitHub Pages is enabled in your repository:
+   - Go to Settings > Pages
+   - Under "Source", select "GitHub Actions"
+
+2. Configure repository permissions for Actions:
+   - Go to Settings > Actions > General
+   - Under "Workflow permissions":
+     - Select "Read and write permissions"
+   - Save changes
+
+3. The workflow is already configured in `.github/workflows/static-site.yml` and will handle:
+   - Building the project
+   - Deploying the generated files to GitHub Pages
+
+4. You don't need to do anything else - changes will be deployed automatically when:
+   - You push to the `main` branch
+   - A pull request is merged into `main`
+
+### Deployment Structure
+
+The deployment process:
+1. Installs dependencies (`npm install`)
+2. Builds the site (`npm run build`)
+3. Deploys the files from the `build` folder to GitHub Pages
+
+Your site will be available at: `/food-diary` or `https://[your-username].github.io/food-diary`
+
 ## Usage
 
 1. **Adding Meals**
